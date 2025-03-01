@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import upload from '../middlewares/upload.middleware.js';
+import protect from '../middlewares/auth.middleware.js';
 import {
   createProject,
   getAllProjects,
@@ -10,10 +10,10 @@ import {
 
 const router = Router();
 
-router.post('/', upload.array('images', 10), createProject); // Acepta hasta 10 imágenes
-router.get('/', getAllProjects);
+router.post('/', protect, createProject); // Solo usuarios autenticados pueden crear proyectos
+router.get('/', getAllProjects); // Todos pueden ver los proyectos públicos
 router.get('/:id', getProjectById);
-router.put('/:id', updateProject);
-router.delete('/:id', deleteProject);
+router.put('/:id', protect, updateProject); // Solo usuarios autenticados pueden editar proyectos
+router.delete('/:id', protect, deleteProject); // Solo usuarios autenticados pueden eliminar proyectos
 
 export default router;

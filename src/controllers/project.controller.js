@@ -1,20 +1,27 @@
 import Project from '../models/project.model.js';
 import cloudinary from '../config/cloudinary.js';
 
-// ✅ Crear un nuevo proyecto
+const uploadImageToCloudinary = (file) => {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      { folder: 'projects' },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve({ public_id: result.public_id, url: result.secure_url });
+      }
+    );
+    uploadStream.end(file.buffer);
+  });
+};
+
+// ✅ Crear un nuevo proyecto con imágenes
 export const createProject = async (req, res) => {
   try {
     const { title, description, category, videos, status } = req.body;
 
-    // Subir imágenes a Cloudinary
+    // Subir imágenes a Cloudinary usando Promesas
     const uploadedImages = await Promise.all(
-      req.files.map(async (file) => {
-        const result = await cloudinary.uploader.upload_stream({ folder: 'projects' }, (error, result) => {
-          if (error) throw new Error('Error subiendo imagen a Cloudinary');
-          return { public_id: result.public_id, url: result.secure_url };
-        }).end(file.buffer);
-        return result;
-      })
+      req.files.map(file => uploadImageToCloudinary(file))
     );
 
     const newProject = new Project({
@@ -32,7 +39,6 @@ export const createProject = async (req, res) => {
     res.status(500).json({ message: 'Error al crear el proyecto', error: error.message });
   }
 };
-
 // ✅ Obtener todos los proyectos
 export const getAllProjects = async (req, res) => {
   try {
