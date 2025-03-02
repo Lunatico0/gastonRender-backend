@@ -17,7 +17,7 @@ const uploadImageToCloudinary = (file) => {
 // ✅ Crear un nuevo proyecto con imágenes
 export const createProject = async (req, res) => {
   try {
-    const { title, description, category, videos, status } = req.body;
+    const { title, description, category, videos, status, clientId } = req.body;
 
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ message: "Se requiere al menos una imagen." });
@@ -34,7 +34,8 @@ export const createProject = async (req, res) => {
       category,
       images: uploadedImages,
       videos,
-      status
+      status,
+      client: status === "privado" ? clientId : null,
     });
 
     await newProject.save();
@@ -47,7 +48,7 @@ export const createProject = async (req, res) => {
 // ✅ Obtener todos los proyectos
 export const getAllProjects = async (req, res) => {
   try {
-    const projects = await Project.find();
+    const projects = await Project.find({ status: "publico" });
     res.json(projects);
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener los proyectos', error: error.message });
@@ -87,5 +88,19 @@ export const deleteProject = async (req, res) => {
     res.json({ message: 'Proyecto eliminado exitosamente' });
   } catch (error) {
     res.status(500).json({ message: 'Error al eliminar el proyecto', error: error.message });
+  }
+};
+
+// ✅ Obtener proyectos privados de un cliente
+export const getPrivateProjects = async (req, res) => {
+  try {
+    if (req.user.role !== "cliente") {
+      return res.status(403).json({ message: "No tienes acceso a esta sección." });
+    }
+
+    const projects = await Project.find({ client: req.user._id });
+    res.json(projects);
+  } catch (error) {
+    res.status(500).json({ message: "Error obteniendo proyectos privados", error: error.message });
   }
 };

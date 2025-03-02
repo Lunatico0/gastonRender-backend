@@ -30,6 +30,11 @@ const ProjectSchema = new mongoose.Schema({
     enum: ["publico", "privado"],
     default: "publico"
   },
+  client: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    default: null
+  },
   createdAt: {
     type: Date,
     default: Date.now

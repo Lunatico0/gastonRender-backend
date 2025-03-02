@@ -6,15 +6,18 @@ import {
   getAllProjects,
   getProjectById,
   updateProject,
-  deleteProject
+  deleteProject,
+  getPrivateProjects
 } from '../controllers/project.controller.js';
 
 const router = Router();
 
-router.post('/', protect, upload.array("images", 5), createProject);
 router.get('/', getAllProjects);
 router.get('/:id', getProjectById);
 router.put('/:id', protect, updateProject);
 router.delete('/:id', protect, deleteProject);
+router.get("/my-private-projects", protect, getPrivateProjects);
+router.post('/', protect, upload.array("images", 5), createProject);
+
 
 export default router;
