@@ -19,6 +19,10 @@ export const createProject = async (req, res) => {
   try {
     const { title, description, category, videos, status } = req.body;
 
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ message: "Se requiere al menos una imagen." });
+    }
+
     // Subir imágenes a Cloudinary usando Promesas
     const uploadedImages = await Promise.all(
       req.files.map(file => uploadImageToCloudinary(file))
@@ -39,6 +43,7 @@ export const createProject = async (req, res) => {
     res.status(500).json({ message: 'Error al crear el proyecto', error: error.message });
   }
 };
+
 // ✅ Obtener todos los proyectos
 export const getAllProjects = async (req, res) => {
   try {
