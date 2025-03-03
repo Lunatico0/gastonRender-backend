@@ -36,28 +36,30 @@ export const loginUser = async (req, res) => {
       return res.status(401).json({ message: "Credenciales incorrectas" });
     }
 
+    // 🔹 Generamos el token ANTES de usarlo
+    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "1h" });
+
     if (user.needsUpdate) {
       return res.status(200).json({
         message: "Debes completar tu información.",
         needsUpdate: true,
-        token,
+        token, // ✅ Ahora sí podemos usar 'token'
         user: { _id: user._id, role: user.role }
       });
     }
 
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "1h" });
-
     res.json({ token, user: { _id: user._id, name: user.name, email: user.email, role: user.role } });
 
   } catch (error) {
-    res.status(500).json({ message: 'Error en el login', error: error.message });
+    res.status(500).json({ message: "Error en el login", error: error.message });
   }
 };
 
 // ✅ Crear usuario
 export const createUser = async (req, res) => {
   try {
-    const { email, name, role } = req.body;  // 🔹 Ahora recibe email y name
+    const { email, name, role } = req.body;
+
     if (req.user.role !== "admin") {
       return res.status(403).json({ message: "No tienes permisos para crear usuarios." });
     }
@@ -68,17 +70,20 @@ export const createUser = async (req, res) => {
     }
 
     const tempPassword = Math.random().toString(36).slice(-8);
-    const hashedPassword = await bcrypt.hash(tempPassword, 10);
+    console.log("🔑 Contraseña generada:", tempPassword);
 
+    // ❌ NO encriptamos la contraseña aquí, se encriptará en `UserSchema`
     const newUser = new User({
-      name,  // 🔹 Se guarda el nombre
-      email, // 🔹 Se guarda el email
-      password: hashedPassword,
+      name,
+      email,
+      password: tempPassword, // 🔹 Se guarda en texto plano, pero `UserSchema` la encriptará antes de guardar
       role,
       needsUpdate: true,
     });
 
     await newUser.save();
+    console.log("✅ Usuario guardado en DB:", newUser);
+
     res.status(201).json({ message: "Usuario creado", tempPassword });
   } catch (error) {
     res.status(500).json({ message: "Error al crear usuario", error: error.message });

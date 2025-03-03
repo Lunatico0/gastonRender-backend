@@ -12,12 +12,12 @@ import {
 
 const router = Router();
 
-router.get('/', getAllProjects);
-router.get('/:id', getProjectById);
+router.get('/', protect, getAllProjects);
+router.get("/privateProject", protect, getPrivateProjects);
+router.post('/', protect, upload.array("images", 5), createProject);
+router.get('/:id', protect, getProjectById);
 router.put('/:id', protect, updateProject);
 router.delete('/:id', protect, deleteProject);
-router.get("/my-private-projects", protect, getPrivateProjects);
-router.post('/', protect, upload.array("images", 5), createProject);
 
 
 export default router;

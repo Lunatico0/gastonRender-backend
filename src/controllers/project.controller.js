@@ -48,12 +48,20 @@ export const createProject = async (req, res) => {
 // ✅ Obtener todos los proyectos
 export const getAllProjects = async (req, res) => {
   try {
-    const projects = await Project.find({ status: "publico" });
+    let projects;
+
+    if (req.user.role === "admin") {
+      projects = await Project.find(); // 🔹 Admins ven todos los proyectos
+    } else {
+      projects = await Project.find({ status: "publico" }); // 🔹 Usuarios normales solo ven públicos
+    }
+
     res.json(projects);
   } catch (error) {
-    res.status(500).json({ message: 'Error al obtener los proyectos', error: error.message });
+    res.status(500).json({ message: "Error al obtener los proyectos", error: error.message });
   }
 };
+
 
 // ✅ Obtener un solo proyecto por ID
 export const getProjectById = async (req, res) => {
@@ -94,13 +102,26 @@ export const deleteProject = async (req, res) => {
 // ✅ Obtener proyectos privados de un cliente
 export const getPrivateProjects = async (req, res) => {
   try {
-    if (req.user.role !== "cliente") {
-      return res.status(403).json({ message: "No tienes acceso a esta sección." });
+    console.log("🔍 req.user en getPrivateProjects:", req.user);
+
+    if (!req.user) {
+      return res.status(401).json({ message: "No autenticado" });
     }
 
-    const projects = await Project.find({ client: req.user._id });
+    const userId = req.user._id;
+    console.log("🔍 Buscando proyectos para el usuario:", userId);
+
+    const projects = await Project.find({ status: "privado", client: userId });
+
+    console.log("✅ Proyectos privados encontrados:", projects);
+
+    if (!projects.length) {
+      return res.status(404).json({ message: "No tienes proyectos privados asignados." });
+    }
+
     res.json(projects);
   } catch (error) {
-    res.status(500).json({ message: "Error obteniendo proyectos privados", error: error.message });
+    console.error("❌ Error en getPrivateProjects:", error.message);
+    res.status(500).json({ message: "Error al obtener los proyectos privados", error: error.message });
   }
 };
